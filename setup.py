@@ -13,14 +13,15 @@
 # limitations under the License.
 
 from setuptools import setup, Extension
+from six import PY3
 
 sasl_module = Extension('sasl.saslwrapper',
-                        sources=['sasl/saslwrapper.cpp'],
+                        sources=['sasl/saslwrapper-3.cpp' if PY3 else 'sasl/saslwrapper-2.cpp'],
                         include_dirs=["sasl"],
                         libraries=["sasl2"],
                         language="c++")
 setup(name='sasl',
-      version='0.2.1',
+      version='0.2.2',
       url="http://github.com/cloudera/python-sasl",
       maintainer="Todd Lipcon",
       maintainer_email="todd@cloudera.com",

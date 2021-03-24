@@ -16,5 +16,15 @@
 set -eu -o pipefail
 set -x
 
-cython --cplus -2 -o sasl/saslwrapper-2.cpp sasl/saslwrapper.pyx
-cython --cplus -3 -o sasl/saslwrapper-3.cpp sasl/saslwrapper.pyx
+GIT_VERSION_TAG="$1"
+GITHUB_ACCOUNT="${2:-cloudera}"
+
+DISTS_DIR=pip-dists
+DOCKER_IMAGE='quay.io/pypa/manylinux1_x86_64'
+
+docker pull "$DOCKER_IMAGE"
+docker container run -t --rm  -v "$(pwd)/io:/io" "$DOCKER_IMAGE" \
+  "/io/manylinux/build.sh" \
+    "/io/${DISTS_DIR}" \
+		"$GIT_VERSION_TAG" \
+		"$GITHUB_ACCOUNT"
