@@ -21,6 +21,7 @@ from distutils.version import LooseVersion
 import os
 import platform
 from setuptools import setup, Extension
+from six import PY3
 import sys
 
 
@@ -37,9 +38,8 @@ if sys.platform == 'darwin':
         if python_target < '10.9' and current_system >= '10.9':
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
 
-
 sasl_module = Extension('sasl.saslwrapper',
-                        sources=['sasl/saslwrapper.cpp'],
+                        sources=['sasl/saslwrapper-3.cpp' if PY3 else 'sasl/saslwrapper-2.cpp'],
                         include_dirs=["sasl"],
                         libraries=["sasl2"],
                         language="c++")
