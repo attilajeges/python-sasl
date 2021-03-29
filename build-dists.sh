@@ -13,11 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -eu -o pipefail
 set -x
 
 GIT_VERSION_TAG="$1"
 GITHUB_ACCOUNT="${2:-cloudera}"
+
+if [ -z "$GIT_VERSION_TAG" ]; then
+  echo "Usage $0 <git-version-tag> [<git-account-name>]";
+  exit 1
+fi
 
 DISTS_DIR=pip-dists
 DOCKER_IMAGE='quay.io/pypa/manylinux1_x86_64'
@@ -28,3 +32,11 @@ docker container run -t --rm  -v "$(pwd)/io:/io" "$DOCKER_IMAGE" \
     "/io/${DISTS_DIR}" \
 		"$GIT_VERSION_TAG" \
 		"$GITHUB_ACCOUNT"
+
+RETVAL="$?"
+if [[ "$RETVAL" != "0" ]]; then
+	echo "Failed with $RETVAL"
+else
+	echo "Succeeded"
+fi
+exit $RETVAL

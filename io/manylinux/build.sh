@@ -58,13 +58,14 @@ is_cpython2() {
 
 build_wheels() {
   # Compile wheels for all python versions
-  for PYDIR in /opt/python/*; do
+  local pydir=""
+  for pydir in /opt/python/*; do
     # Do not build wheels from cpython2
-    local pyver_abi="$(basename $PYDIR)"
+    local pyver_abi="$(basename $pydir)"
     if is_cpython2 "$pyver_abi"; then continue; fi
 
     echo "Building wheel with $($PYBIN/python -V)"
-    "${PYDIR}/bin/python" setup.py bdist_wheel -d "$BDIST_TMP_DIR"
+    "${pydir}/bin/python" setup.py bdist_wheel -d "$BDIST_TMP_DIR"
   done
 }
 
@@ -91,38 +92,70 @@ show_sdist() {
   ls -l "$SDIST_DIR"
 }
 
+set_up_virt_env() {
+  local pydir="$1"
+  local pyver_abi="$(basename $pydir)"
+
+  if is_cpython2 "$pyver_abi"; then
+    "${pydir}/bin/python" -m virtualenv sasl_test_env
+  else
+    "${pydir}/bin/python" -m venv sasl_test_env
+  fi
+
+  # set -eu must be disabled temporarily for activating the env.
+  set +e +u
+  source sasl_test_env/bin/activate
+  set -eu
+}
+
+tear_down_virt_env() {
+  set +e +u
+  deactivate
+  set -eu
+  rm -rf sasl_test_env
+}
+
 smoke_test() {
   cat <<EOF >/tmp/smoke.py
 import sasl
+from sys import exit
+
 sasl_client = sasl.Client()
-sasl_client.setAttr('service', 'myservice')
-sasl_client.setAttr('host', 'myhost')
-sasl_client.init()
-sasl_client.encode('1234567890')
+if not sasl_client.setAttr('service', 'myservice'): exit(1)
+if not sasl_client.setAttr('host', 'myhost'): exit(1)
+if not sasl_client.init(): exit(1)
+ok, enc = sasl_client.encode('1234567890')
+if not ok or enc != b'1234567890': exit(1)
 EOF
 
   cd /tmp
 
   # Install sdist with different python versions and run smoke test script.
   local sdistfn="$(ls ${SDIST_DIR}/${PKG_NAME}-*.tar.gz)"
-  for PYBIN in /opt/python/*/bin/; do
-    "${PYBIN}/pip" install --upgrade --force-reinstall --no-binary "$PKG_NAME" "$sdistfn"
-    "${PYBIN}/python" /tmp/smoke.py
+  local pydir=""
+  for pydir in /opt/python/*; do
+    set_up_virt_env "$pydir"
+    pip install --upgrade --force-reinstall --no-binary "$PKG_NAME" "$sdistfn"
+    python /tmp/smoke.py
+    tear_down_virt_env
   done
 
   # Install wheels with different python versions.
-  # Required system packages are included in wheels.
   # System requirements can be removed as the wheels already include them.
   yum remove -y "${SYSTEM_REQUIREMENTS[@]}"
   yum remove -y "${BUILD_REQUIREMENTS[@]}"
-  for PYDIR in /opt/python/*; do
+
+  for pydir in /opt/python/*; do
     # Haven't built wheels for cpython2, skip cpython2 testing
-    local pyver_abi="$(basename $PYDIR)"
+    local pyver_abi="$(basename $pydir)"
     if is_cpython2 "$pyver_abi"; then continue; fi
 
     local whlfn="$(ls ${WHEELHOUSE_DIR}/${PKG_NAME}-*-${pyver_abi}-*.whl)"
-    "${PYDIR}/bin/pip" install --upgrade --force-reinstall --only-binary "$PKG_NAME" "$whlfn"
-    "${PYDIR}/bin/python" /tmp/smoke.py
+
+    set_up_virt_env "$pydir"
+    pip install --upgrade --force-reinstall --only-binary "$PKG_NAME" "$whlfn"
+    python /tmp/smoke.py
+    tear_down_virt_env
   done
 }
 
