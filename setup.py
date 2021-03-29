@@ -21,9 +21,9 @@ from distutils.version import LooseVersion
 import os
 import platform
 from setuptools import setup, Extension
-from six import PY3
 import sys
 
+PY3 = platform.python_version_tuple()[0] == '3'
 
 # From https://github.com/pandas-dev/pandas/pull/24274:
 # For mac, ensure extensions are built for macos 10.9 when compiling on a

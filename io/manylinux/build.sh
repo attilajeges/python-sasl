@@ -32,7 +32,6 @@ WHEELHOUSE_DIR="${DISTS_DIR}/wheelhouse"
 SDIST_DIR="${DISTS_DIR}/sdist"
 
 SYSTEM_REQUIREMENTS=(cyrus-sasl cyrus-sasl-devel)
-PIP_REQUIREMENTS=(six)
 BUILD_REQUIREMENTS=(devtoolset-2-gcc devtoolset-2-gcc-c++)
 
 prepare_system() {
@@ -63,9 +62,6 @@ build_wheels() {
     # Do not build wheels from cpython2
     local pyver_abi="$(basename $PYDIR)"
     if is_cpython2 "$pyver_abi"; then continue; fi
-
-    # Install build requirements
-    "${PYDIR}/bin/python" -m pip install "${PIP_REQUIREMENTS[@]}"
 
     echo "Building wheel with $($PYBIN/python -V)"
     "${PYDIR}/bin/python" setup.py bdist_wheel -d "$BDIST_TMP_DIR"
