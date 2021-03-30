@@ -16,5 +16,4 @@
 set -eu -o pipefail
 set -x
 
-cython --cplus -2 -o sasl/saslwrapper-2.cpp sasl/saslwrapper.pyx
 cython --cplus -3 -o sasl/saslwrapper-3.cpp sasl/saslwrapper.pyx
