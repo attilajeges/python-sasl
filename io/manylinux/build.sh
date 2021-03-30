@@ -109,14 +109,16 @@ set_up_virt_env() {
 }
 
 tear_down_virt_env() {
+  # set -eu must be disabled temporarily for deactivating the env.
   set +e +u
   deactivate
   set -eu
+
   rm -rf sasl_test_env
 }
 
-smoke_test() {
-  cat <<EOF >/tmp/smoke.py
+sanity_check() {
+  cat <<EOF >/tmp/sanity_check.py
 import sasl
 from sys import exit
 
@@ -130,18 +132,18 @@ EOF
 
   cd /tmp
 
-  # Install sdist with different python versions and run smoke test script.
+  # Install sdist with different python versions and run sanity_check.
   local sdistfn="$(ls ${SDIST_DIR}/${PKG_NAME}-*.tar.gz)"
   local pydir=""
   for pydir in /opt/python/*; do
     set_up_virt_env "$pydir"
     pip install --upgrade --force-reinstall --no-binary "$PKG_NAME" "$sdistfn"
-    python /tmp/smoke.py
+    python /tmp/sanity_check.py
     tear_down_virt_env
   done
 
-  # Install wheels with different python versions.
-  # System requirements can be removed as the wheels already include them.
+  # Install wheels with different python versions and run sanity_check.
+  # System requirements can be removed as the wheels should already include them.
   yum remove -y "${SYSTEM_REQUIREMENTS[@]}"
   yum remove -y "${BUILD_REQUIREMENTS[@]}"
 
@@ -154,7 +156,7 @@ EOF
 
     set_up_virt_env "$pydir"
     pip install --upgrade --force-reinstall --only-binary "$PKG_NAME" "$whlfn"
-    python /tmp/smoke.py
+    python /tmp/sanity_check.py
     tear_down_virt_env
   done
 }
@@ -168,4 +170,4 @@ show_wheels
 build_sdist
 show_sdist
 
-smoke_test
+sanity_check
