@@ -23,8 +23,6 @@ import platform
 from setuptools import setup, Extension
 import sys
 
-PY3 = platform.python_version_tuple()[0] == '3'
-
 # From https://github.com/pandas-dev/pandas/pull/24274:
 # For mac, ensure extensions are built for macos 10.9 when compiling on a
 # 10.9 system or above, overriding distuitls behaviour which is to target
@@ -39,7 +37,7 @@ if sys.platform == 'darwin':
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
 
 sasl_module = Extension('sasl.saslwrapper',
-                        sources=['sasl/saslwrapper-3.cpp' if PY3 else 'sasl/saslwrapper-2.cpp'],
+                        sources=['sasl/saslwrapper-3.cpp'],
                         include_dirs=["sasl"],
                         libraries=["sasl2"],
                         language="c++")
