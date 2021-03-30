@@ -37,7 +37,7 @@ if sys.platform == 'darwin':
             os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
 
 sasl_module = Extension('sasl.saslwrapper',
-                        sources=['sasl/saslwrapper-3.cpp'],
+                        sources=['sasl/saslwrapper.cpp'],
                         include_dirs=["sasl"],
                         libraries=["sasl2"],
                         language="c++")
